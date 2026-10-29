@@ -1,0 +1,112 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>1 из 8 миллиардов</title>
+<style>
+:root{--bg:#14202e;--cd:#1c2b3d;--fg:#e7ecf1;--mut:#8fa1b3;--ac:#6fb3a8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,sans-serif;padding:max(env(safe-area-inset-top),28px) 12px 24px}
+h1{font:600 26px/1.2 Georgia,serif;margin:8px 0 6px}
+.c{background:var(--cd);border-radius:10px;padding:12px;margin:10px 0}
+.m{color:var(--mut);font-size:13px}
+button{background:#2a3d54;color:var(--fg);border:0;border-radius:8px;padding:10px 12px;font:inherit;margin:3px 3px 3px 0}
+button.a{background:var(--ac);color:#10202a}
+.bar{height:7px;background:#2a3d54;border-radius:4px;overflow:hidden;margin-bottom:6px}
+.bar i{display:block;height:100%;background:var(--ac)}
+#log{max-height:32vh;overflow:auto}#log p{margin:4px 0}
+</style></head><body><div id="app"></div>
+<script src="data.js"></script>
+<script>
+// Демо-набор (приблизительные значения). Реальные данные подставляет fetch_data.py.
+// Порядок: [страна, рождений/год (тыс.), население (млн), жизнь М, жизнь Ж, дет.смертн.‰, до 5 лет ‰, ВВП ППС $, Джини, школа лет, мат.смертн., убийств/100к, ВИЧ %]
+const DEMO=[["Индия",23000,1428,67.7,72.4,26,31,9000,32,12.7,103,3,.2],["Китай",9000,1411,75,80.5,5,6,22000,38,14,23,.5,.1],["Нигерия",7500,223,52,54.5,70,102,6000,35,10,1047,9,1.3],["Пакистан",6800,240,65,68,52,63,6000,30,8,154,4,.2],["Индонезия",4500,277,67,71,19,22,14000,38,13,173,.4,.4],["ДР Конго",4300,102,59,63,64,82,1500,42,8,547,10,.7],["Эфиопия",4000,126,64,68,35,48,2900,35,9,267,7,.9],["США",3600,335,75,80.5,5.4,6.3,75000,41,16,22,6,.4],["Бразилия",2600,216,72,79,12,14,20000,52,15,72,20,.5],["Россия",1300,144,68,78,4.5,5.2,35000,36,15,17,6,.9],["Япония",760,124,81.5,87.5,1.8,2.3,50000,33,15,4,.2,.01],["Германия",690,84,79,83.5,3.1,3.7,66000,31,17,4,.8,.1]];
+const REAL=(window.EXTRA_DATA||[]).length>50;
+const D=(REAL?EXTRA_DATA:DEMO).map(a=>{const i=a[5]??15;return{n:a[0],b:a[1],p:a[2],m:a[3]||68,f:a[4]||73,i,u:Math.max(a[6]??18,i),g:a[7]||15000,k:Math.min(a[8]||38,70),s:a[9]||12,r:a[10]??100,h:a[11]??5,v:a[12]??.3}});
+const $=s=>document.querySelector(s),R=Math.random,fm=n=>Math.round(n).toLocaleString('ru');
+const rn=()=>Math.sqrt(-2*Math.log(1-R()))*Math.cos(6.2832*R());
+const pn=p=>{const t=Math.sqrt(-2*Math.log(1-p));return t-(2.515517+.802853*t+.010328*t*t)/(1+1.432788*t+.189269*t*t+.001308*t**3)};
+const sgm=c=>Math.SQRT2*pn((c.k/100+1)/2);
+const wp=o=>{let t=0;o.forEach(e=>t+=e[1]);let x=R()*t;for(const e of o){x-=e[1];if(x<=0)return e[0]}return o[0][0]};
+const cl=x=>Math.max(0,Math.min(100,x)),SP=[1,2,4,8];
+const FO=[['study','Учёба'],['work','Работа'],['friend','Друзья'],['health','Здоровье'],['rest','Отдых']];
+const E={study:[-.5,-1,3,0],work:[-.5,-1,0,-1],friend:[0,2,0,3],health:[3,0,0,0],rest:[1,2,-.5,0]};
+let C={mode:'b',len:60},L=null,paused=false,pend=null,spd=1,auto=false,tm;
+
+// Таблица смертности: детская по данным страны, взрослая — Гомпертц, подогнанный под ожидаемую продолжительность жизни
+function mk(c,sex){const le=sex?c.f:c.m,x=Math.max(0,(c.u-c.i)/(1000-c.i)/1000),q4=1-Math.pow(1-x,.25);let lo=1e-7,hi=.1,q;
+for(let t=0;t<40;t++){const A=(lo+hi)/2;q=[];for(let a=0;a<120;a++)q.push(a==0?c.i/1000:a<5?q4:Math.min(1,3e-4+A*Math.exp(.085*(a-5))));
+let s=1,e=0;for(const v of q){e+=s*(1-v/2);s*=1-v}e>le?lo=A:hi=A}return q}
+function cause(c,a,sx){const p=c.g<8000?1:c.g<25000?.5:0;let o;
+if(a<1)o=[['осложнения при родах или недоношенность',3],['врождённые пороки',2],['тяжёлая инфекция',p*3]];
+else if(a<5)o=[['пневмония',1+p*3],['диарея',p*2.5],['малярия',p*2],['недоедание',p*2],['несчастный случай',1],['врождённая болезнь',1]];
+else if(a<15)o=[['инфекция',.5+p*2],['несчастный случай',2],['болезнь',1.5],['утопление',1]];
+else if(a<40)o=[['несчастный случай или травма',2],['насилие',c.h/3],['болезнь',1.5],['ВИЧ-связанная болезнь',c.v*3],['осложнения беременности и родов',sx?c.r/150:0],['инфекция',p*2]];
+else if(a<65)o=[['болезнь сердца и сосудов',4],['онкологическое заболевание',3.5],['диабет',1],['инфекция',p*1.5],['несчастный случай',1],['цирроз печени',1],['ВИЧ-связанная болезнь',c.v*1.5]];
+else o=[['болезнь сердца и сосудов',5],['онкологическое заболевание',3],['хроническая болезнь лёгких',1.5],['деменция',1.5],['пневмония',.5+p*1.5]];
+return wp(o)}
+// Доход работающего: ~1.5×ВВП на душу, логнормальное распределение по Джини, множитель образования
+const inc=()=>(L.busy>L.age||L.age<15)?0:L.c.g*1.5*Math.exp(L.sg*(.5*L.z0+.87*L.z1)-L.sg*L.sg/2)*[.55,.8,1.15,2.1][L.edu]/1.1*L.mm*(L.ret?(L.c.g>2e4?.6:.2):1);
+const log=t=>{L.log.unshift(`<p><b>${L.age}</b> ${t}</p>`);L.log.length=Math.min(L.log.length,60)};
+
+function birth(){const w=D.map(c=>C.mode=='b'?c.b:c.p),T=w.reduce((a,b)=>a+b);let x=R()*T,i=0;for(;i<D.length-1;i++){x-=w[i];if(x<=0)break}
+const c=D[i],sex=R()<.488?1:0;
+L={c,sex,odds:T/w[i],q:mk(c,sex),le:sex?c.f:c.m,age:0,h:80,j:70,m:50,b:60,z0:rn(),z1:rn(),edu:0,busy:0,mm:1,ret:0,f:'rest',sum:0,wy:0,log:[],dead:0,home:c.n};
+L.sg=sgm(c);L.hh=c.g*Math.exp(L.sg*L.z0-L.sg*L.sg/2);
+log(`Вы родились: ${c.n}, ${sex?'девочка':'мальчик'}.`);paused=false;pend=null;ui();tick()}
+
+function migrate(){const t=D.filter(x=>x.g>25000),n=t[Math.floor(R()*t.length)],ok=R()<.5;
+L.c=n;L.q=mk(n,L.sex);L.sg=sgm(n);L.mm=ok?1:.55;L.b-=10;L.busy=0;log(`Вы переехали: ${n.n}. ${ok?'Нашли работу по специальности.':'Работаете на случайных подработках.'}`)}
+
+function ev(a){const c=L.c,z=L.z0;
+if(a==6){const ok=R()<Math.min(.98,c.s/9+.1+.05*z);L.edu=ok?1:0;return{t:ok?'Вас записали в школу.':'Школа далеко или не по карману — вы остаётесь дома и помогаете семье.'}}
+if(a==15&&L.edu==1){const ok=R()<Math.min(.97,(c.s-3)/9+.05*z);if(ok)L.edu=2;return{t:ok?'Вы продолжаете учёбу в старшей школе.':'Учёба закончилась: пора зарабатывать.'}}
+if(a==18){const u=L.edu==2&&R()<Math.min(.9,c.s/16+.08*z+.1);
+return{t:'Вам 18. Что дальше?',o:[...(u?[['Поступить в вуз',()=>{L.edu=3;L.busy=22;log('Вы поступили в университет.')}]]:[]),['Начать работать',()=>log('Вы начали работать.')],['Уехать в другую страну',migrate]]}}
+if(a==25)return{t:'Вам 25. Жизнь выходит на новый виток.',o:[['Создать семью',()=>{L.b+=15;L.j+=8;log('Вы создали семью.')}],['Строить карьеру',()=>{L.mm*=1.12;L.b-=5;log('Вы вложились в карьеру.')}],['Путешествовать',()=>{L.j+=10;L.m+=5;log('Вы много путешествовали.')}]]}
+if((a==40||a==55)&&R()<.35+(60-L.h)/200){const rich=inc()>c.g*1.2;
+return{t:'Врач находит серьёзную проблему со здоровьем.',o:[['Лечиться',()=>{const ok=rich||R()<.5;L.h+=ok?15:-5;log(ok?'Лечение помогло.':'Лечение оказалось недоступным или слишком дорогим.')}],['Не обращаться',()=>{L.h-=12;log('Вы решили не лечиться.')}]]}}
+if(a==65)return{t:'Вам 65. Выйти на пенсию?',o:[['Выйти на пенсию',()=>{L.ret=1;L.j+=5;log('Вы вышли на пенсию.')}],['Продолжить работать',()=>{L.h-=3;log('Вы продолжили работать.')}]]}
+return null}
+
+function step(){if(!L||L.dead||paused||pend)return;const a=L.age,F=E[L.f],i=inc();
+L.h+=F[0]-(a>35?.5:0)-(i>0&&i<800?.4:0)+(60-L.h)*.03;L.j+=F[1]+(55-L.j)*.04;L.m+=F[2]+(55-L.m)*.04;L.b+=F[3]+(55-L.b)*.04;
+if(L.f=='work')L.mm*=1.01;
+if(a>=15&&i>0){L.sum+=i;L.wy++}
+if(a>=5&&R()<.04){L.h-=6;log('Вы тяжело болели.')}
+if(a>=18&&i>0&&!L.ret&&R()<.02){L.mm*=.7;log('Вы потеряли работу.')}
+if(R()<.015){L.j+=6;log('Хороший год.')}
+['h','j','m','b'].forEach(k=>L[k]=cl(L[k]));
+const q=L.q[a]*(a<5?1:Math.max(.4,1.5-L.h/100));
+if(R()<q){L.dead=1;L.cause=cause(L.c,a,L.sex);return}
+L.age++;const e=ev(L.age);
+if(e){log(e.t);if(e.o){if(auto)e.o[Math.floor(R()*e.o.length)][1]();else pend=e}}}
+
+function tick(){clearTimeout(tm);if(!L||L.dead||paused||pend)return;tm=setTimeout(()=>{step();ui();tick()},C.len*6e4/L.le/spd)}
+const pz=()=>{paused=!paused;tick();ui()};
+const ch=k=>{const o=pend.o[k];pend=null;o[1]();ui();tick()};
+const sp=()=>{spd=SP[(SP.indexOf(spd)+1)%4];tick();ui()};
+const au=()=>{auto=!auto;if(auto&&pend)ch(Math.floor(R()*pend.o.length));ui()};
+const fo=f=>{L.f=f;ui()};
+
+function home(){$('#app').innerHTML=`<h1>1 из 8 миллиардов</h1>
+<div class=m>Симуляция жизни по реальной статистике. Стран в базе: ${D.length}${REAL?'':' (демо-набор, запустите fetch_data.py)'}. От 15 лет: затрагиваются смерть, бедность, болезни.</div>
+<div class=c><span class=m>Как выбирается страна</span><br><button class="${C.mode=='b'?'a':''}" onclick="C.mode='b';home()">По числу рождений</button><button class="${C.mode=='p'?'a':''}" onclick="C.mode='p';home()">По населению</button></div>
+<div class=c><span class=m>Длина жизни</span><br>${[30,60,90].map(n=>`<button class="${C.len==n?'a':''}" onclick="C.len=${n};home()">~${n} мин</button>`).join('')}</div>
+<button class=a onclick="birth()">Родиться</button>`}
+
+function endv(){const d=L.age-L.le,w=L.wy?L.sum/L.wy:0;$('#app').innerHTML=`<h1>Конец жизни</h1>
+<div class=c>Возраст: ${L.age}<br>Причина: ${L.cause}.<br>Ожидаемая продолжительность для вашего пола в стране рождения: ${L.le.toFixed(1)} (${d>=0?'+':''}${d.toFixed(1)}).<br>Родина: ${L.home}, шанс родиться там — 1 из ${fm(L.odds)}.${L.c.n!=L.home?`<br>Эмиграция: ${L.c.n}.`:''}<br>Средний доход в рабочие годы: $${fm(w)}/год (ППС).</div>
+<div class=c>${L.log.slice(0,25).join('')}</div>
+<div class=m>Если тема отозвалась тяжело, поговорите с близкими или обратитесь на линию помощи в вашей стране.</div>
+<button class=a onclick="L=null;home()">Родиться снова</button>`}
+
+function ui(){if(!L)return home();if(L.dead)return endv();
+const c=L.c,i=inc(),v=i>0?i:L.hh,bar=(n,x)=>`<div class=m>${n} ${Math.round(x)}</div><div class=bar><i style="width:${x}%"></i></div>`;
+$('#app').innerHTML=`<h1>${c.n}</h1>
+<div class=m>Шанс родиться здесь: 1 из ${fm(L.odds)}. ВВП на душу $${fm(c.g)} (ППС), ожидаемая жизнь ${L.le.toFixed(1)}, детская смертность ${c.i}‰, Джини ${c.k}, школа ${c.s} лет.</div>
+<div class=c><b>Возраст ${L.age}</b>, ${2026+L.age} г.<br>${i>0?'Ваш доход':'Доход семьи на человека'}: $${fm(v)}/год (ППС)${v<785?', ниже черты крайней бедности':''}</div>
+<div class=c>${bar('Здоровье',L.h)}${bar('Радость',L.j)}${bar('Ум',L.m)}${bar('Узы',L.b)}</div>
+${pend?`<div class=c>${pend.t}<br>${pend.o.map((o,k)=>`<button class=a onclick="ch(${k})">${o[0]}</button>`).join('')}</div>`:`<div class=c><span class=m>Фокус года</span><br>${FO.map(f=>`<button class="${L.f==f[0]?'a':''}" onclick="fo('${f[0]}')">${f[1]}</button>`).join('')}</div>`}
+<div><button onclick="pz()">${paused?'▶ Продолжить':'⏸ Пауза'}</button><button onclick="sp()">${spd}×</button><button class="${auto?'a':''}" onclick="au()">Авто</button></div>
+<div class=c id=log>${L.log.slice(0,40).join('')}</div>`}
+home();
+</script></body></html>
