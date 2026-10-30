@@ -30,12 +30,12 @@ class GameVM(app: Application) : AndroidViewModel(app) {
     var auto by mutableStateOf(sp.getBoolean("auto", false)); private set
     var hide by mutableStateOf(sp.getBoolean("hide", false)); private set
     var anim by mutableStateOf(sp.getBoolean("anim", true)); private set
-    fun setTheme(v: Int) { theme = v; sp.edit().putInt("theme", v).apply() }
-    fun setLen(v: Int) { len = v; sp.edit().putInt("len", v).apply() }
-    fun setMode(v: Int) { mode = v; sp.edit().putInt("mode", v).apply() }
-    fun setAuto(v: Boolean) { auto = v; autoT = 0f; sp.edit().putBoolean("auto", v).apply() }
-    fun setHide(v: Boolean) { hide = v; sp.edit().putBoolean("hide", v).apply() }
-    fun setAnim(v: Boolean) { anim = v; sp.edit().putBoolean("anim", v).apply() }
+    fun applyTheme(v: Int) { theme = v; sp.edit().putInt("theme", v).apply() }
+    fun applyLen(v: Int) { len = v; sp.edit().putInt("len", v).apply() }
+    fun applyMode(v: Int) { mode = v; sp.edit().putInt("mode", v).apply() }
+    fun applyAuto(v: Boolean) { auto = v; autoT = 0f; sp.edit().putBoolean("auto", v).apply() }
+    fun applyHide(v: Boolean) { hide = v; sp.edit().putBoolean("hide", v).apply() }
+    fun applyAnim(v: Boolean) { anim = v; sp.edit().putBoolean("anim", v).apply() }
 
     // --- состояние игры ---
     var screen by mutableStateOf(Scr.HOME); private set
@@ -109,7 +109,7 @@ class GameVM(app: Application) : AndroidViewModel(app) {
     }
 
     fun togglePause() { paused = !paused }
-    fun setSpeed(s: Int) { speed = s; ff = false }
+    fun applySpeed(s: Int) { speed = s; ff = false }
     fun fastForward() { ff = true; paused = false }
     fun setFocus(id: String) { life?.focus = id; tick++ }
     fun toggleStar(e: Entry) { e.star = !e.star; tick++ }

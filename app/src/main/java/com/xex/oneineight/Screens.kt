@@ -90,20 +90,20 @@ fun SwitchRow(title: String, sub: String, v: Boolean, on: (Boolean) -> Unit) {
 @Composable
 fun SettingsBody(vm: GameVM) {
     val p = P()
-    PCard { T("ТЕМА", 11, p.mute, mono = true); Spacer(Modifier.height(6.dp)); Chips(listOf("Системная", "Светлая", "Тёмная"), vm.theme) { vm.setTheme(it) } }
+    PCard { T("ТЕМА", 11, p.mute, mono = true); Spacer(Modifier.height(6.dp)); Chips(listOf("Системная", "Светлая", "Тёмная"), vm.theme) { vm.applyTheme(it) } }
     PCard {
         T("ДЛИТЕЛЬНОСТЬ ОДНОЙ ЖИЗНИ", 11, p.mute, mono = true); Spacer(Modifier.height(6.dp))
-        Chips(listOf("~30 мин", "~1 ч", "~1,5 ч"), listOf(30, 60, 90).indexOf(vm.len)) { vm.setLen(listOf(30, 60, 90)[it]) }
+        Chips(listOf("~30 мин", "~1 ч", "~1,5 ч"), listOf(30, 60, 90).indexOf(vm.len)) { vm.applyLen(listOf(30, 60, 90)[it]) }
         T("Столько времени уйдёт на жизнь средней продолжительности. Действует сразу.", 11, p.mute)
     }
     PCard {
         T("КАК ВЫБИРАЕТСЯ СТРАНА", 11, p.mute, mono = true); Spacer(Modifier.height(6.dp))
-        Chips(listOf("По числу рождений", "По населению"), vm.mode) { vm.setMode(it) }
+        Chips(listOf("По числу рождений", "По населению"), vm.mode) { vm.applyMode(it) }
     }
     PCard {
-        SwitchRow("Авторежим", "Решения выбираются сами, первый вариант", vm.auto) { vm.setAuto(it) }
-        SwitchRow("Скрывать окна решений", "Решения принимаются без окон", vm.hide) { vm.setHide(it) }
-        SwitchRow("Анимации", "Движение в сценах и на глобусе", vm.anim) { vm.setAnim(it) }
+        SwitchRow("Авторежим", "Решения выбираются сами, первый вариант", vm.auto) { vm.applyAuto(it) }
+        SwitchRow("Скрывать окна решений", "Решения принимаются без окон", vm.hide) { vm.applyHide(it) }
+        SwitchRow("Анимации", "Движение в сценах и на глобусе", vm.anim) { vm.applyAnim(it) }
     }
     PCard {
         T("О ПРОЕКТЕ", 11, p.mute, mono = true)
@@ -157,10 +157,10 @@ fun HomeScreen(vm: GameVM) {
         }
         PCard {
             T("КАК ВЫБИРАЕТСЯ СТРАНА", 11, p.mute, mono = true); Spacer(Modifier.height(6.dp))
-            Chips(listOf("По числу рождений", "По населению"), vm.mode) { vm.setMode(it) }
+            Chips(listOf("По числу рождений", "По населению"), vm.mode) { vm.applyMode(it) }
             Spacer(Modifier.height(8.dp))
             T("ДЛИТЕЛЬНОСТЬ ЖИЗНИ", 11, p.mute, mono = true); Spacer(Modifier.height(6.dp))
-            Chips(listOf("~30 мин", "~1 ч", "~1,5 ч"), listOf(30, 60, 90).indexOf(vm.len)) { vm.setLen(listOf(30, 60, 90)[it]) }
+            Chips(listOf("~30 мин", "~1 ч", "~1,5 ч"), listOf(30, 60, 90).indexOf(vm.len)) { vm.applyLen(listOf(30, 60, 90)[it]) }
         }
         PBtn("Родиться", Modifier.fillMaxWidth(), primary = true) { vm.startBirth() }
         Spacer(Modifier.height(10.dp))
@@ -272,9 +272,9 @@ fun TopBar(vm: GameVM, L: Life, t: Int) {
         Spacer(Modifier.height(8.dp))
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
             IconBox(on = vm.paused, onClick = { vm.togglePause() }) { PlayPauseIcon(vm.paused, if (vm.paused) p.bg else p.ink) }
-            SPEEDS.forEach { s -> PBtn("${s}×", on = vm.speed == s && !vm.ff) { vm.setSpeed(s) } }
+            SPEEDS.forEach { s -> PBtn("${s}×", on = vm.speed == s && !vm.ff) { vm.applySpeed(s) } }
             IconBox(on = vm.ff, onClick = { vm.fastForward() }) { FfIcon(if (vm.ff) p.bg else p.ink) }
-            PBtn("Авто", on = vm.auto) { vm.setAuto(!vm.auto) }
+            PBtn("Авто", on = vm.auto) { vm.applyAuto(!vm.auto) }
         }
     }
 }
@@ -330,8 +330,8 @@ fun DecisionOverlay(vm: GameVM) {
                         T("Через мгновение выбирается «${d.opts[0].label}»", 11, p.mute, mono = true)
                     }
                     Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        if (vm.auto) PBtn("Отключить «Авто»") { vm.setAuto(false) }
-                        PBtn("Скрыть окна") { vm.setHide(true); vm.choose(0) }
+                        if (vm.auto) PBtn("Отключить «Авто»") { vm.applyAuto(false) }
+                        PBtn("Скрыть окна") { vm.applyHide(true); vm.choose(0) }
                     }
                 }
             }
