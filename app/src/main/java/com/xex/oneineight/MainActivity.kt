@@ -1,23 +1,18 @@
 package com.xex.oneineight
 
-import android.app.Activity
 import android.os.Bundle
-import android.webkit.WebView
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.viewmodel.compose.viewModel
 
-class MainActivity : Activity() {
-    private lateinit var web: WebView
-
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        web = WebView(this)
-        web.settings.javaScriptEnabled = true
-        web.settings.domStorageEnabled = true
-        setContentView(web)
-        web.loadUrl("file:///android_asset/index.html")
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        if (web.canGoBack()) web.goBack() else super.onBackPressed()
+        enableEdgeToEdge()
+        setContent {
+            val vm: GameVM = viewModel()
+            App(vm)
+        }
     }
 }
